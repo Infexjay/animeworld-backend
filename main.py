@@ -5,7 +5,7 @@ import time
 
 app = FastAPI()
 
-@app.get("/")
+@app.get("/random-anime")
 def scrape_animepahe():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
