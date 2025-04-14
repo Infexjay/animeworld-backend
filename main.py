@@ -1,45 +1,35 @@
 from fastapi import FastAPI
 import requests
-from fastapi.middleware.cors import CORSMiddleware
-import logging
+import random
 
-# Initialize app
 app = FastAPI()
 
-# Set up basic logging
-logging.basicConfig(level=logging.INFO)
-
-# CORS (Allow all)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+BASE_URL = "https://api.consumet.org/anime/gogoanime"
 
 @app.get("/")
 def root():
-    return {"message": "Anime World API is online"}
+    return {"message": "Anime World API is up and powered by Consumet"}
 
-@app.get("/search-anime")
-def search_anime(q: str = "naruto"):
-    url = f"https://animepahe.ru/api?m=search&q={q}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Linux; Android 9; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
-        "Accept": "application/json"
+@app.get("/random-anime")
+def get_random_anime():
+    query = random.choice(["naruto", "one piece", "bleach", "attack on titan", "demon slayer", "jujutsu kaisen", "tokyo ghoul", "my hero academia"])
+    res = requests.get(f"{BASE_URL}/{query}")
+
+    if res.status_code != 200:
+        return {"error": "Failed to fetch from Consumet"}
+
+    data = res.json()
+    return {
+        "title": data.get("title"),
+        "image": data.get("image"),
+        "episodes": data.get("episodes"),
+        "description": data.get("description")
     }
-    
-    logging.info(f"Fetching from: {url}")
-    logging.info(f"With headers: {headers}")
-    
-    try:
-        r = requests.get(url, headers=headers, timeout=15)
-        logging.info(f"Status Code: {r.status_code}")
-        logging.info(f"Response Text Snippet: {r.text[:200]}")  # limit log output
-        return r.json()
-    except requests.exceptions.RequestException as e:
-        logging.error(f"RequestException: {str(e)}")
-        return {"error": f"RequestException: {str(e)}"}
-    except ValueError as e:
-        logging.error(f"JSON Decode Error: {str(e)}")
-        return {"error": f"JSON Decode Error: {str(e)}"}
+
+@app.get("/search")
+def search_anime(q: str):
+    res = requests.get(f"{BASE_URL}?keyw={q}")
+    if res.status_code != 200:
+        return {"error": "Search failed"}
+
+    return res.json()
