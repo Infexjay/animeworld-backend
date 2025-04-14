@@ -6,30 +6,39 @@ app = FastAPI()
 
 BASE_URL = "https://api.consumet.org/anime/gogoanime"
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Accept": "application/json",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.google.com/",
+    "Connection": "keep-alive"
+}
+
 @app.get("/")
 def root():
-    return {"message": "Anime World API is up and powered by Consumet"}
+    return {"message": "Anime World API is online"}
 
 @app.get("/random-anime")
 def get_random_anime():
-    query = random.choice(["naruto", "one piece", "bleach", "attack on titan", "demon slayer", "jujutsu kaisen", "tokyo ghoul", "my hero academia"])
-    res = requests.get(f"{BASE_URL}/{query}")
+    query = random.choice(["naruto", "bleach", "one piece", "tokyo ghoul", "demon slayer", "my hero academia"])
+    url = f"{BASE_URL}?keyw={query}"
 
-    if res.status_code != 200:
-        return {"error": "Failed to fetch from Consumet"}
+    try:
+        res = requests.get(url, headers=HEADERS)
+        res.raise_for_status()
+        data = res.json()
 
-    data = res.json()
-    return {
-        "title": data.get("title"),
-        "image": data.get("image"),
-        "episodes": data.get("episodes"),
-        "description": data.get("description")
-    }
+        if not data or not isinstance(data, list):
+            return {"error": "Invalid or empty data from API", "raw": data}
 
-@app.get("/search")
-def search_anime(q: str):
-    res = requests.get(f"{BASE_URL}?keyw={q}")
-    if res.status_code != 200:
-        return {"error": "Search failed"}
+        selected = random.choice(data)
 
-    return res.json()
+        return {
+            "title": selected.get("title"),
+            "image": selected.get("image"),
+            "id": selected.get("id"),
+            "url": selected.get("url")
+        }
+    except Exception as e:
+        return {"error": str(e), "debug_url": url}
