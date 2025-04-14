@@ -1,44 +1,27 @@
-from fastapi import FastAPI
 import requests
-import random
+from bs4 import BeautifulSoup
+import time
 
-app = FastAPI()
-
-BASE_URL = "https://api.consumet.org/anime/gogoanime"
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Accept": "application/json",
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                  "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                  "Chrome/122.0.0.0 Safari/537.36",
     "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://www.google.com/",
-    "Connection": "keep-alive"
+    "Referer": "https://animepahe.ru/",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
 }
 
-@app.get("/")
-def root():
-    return {"message": "Anime World API is online"}
+# Wait to mimic human
+time.sleep(5)
 
-@app.get("/random-anime")
-def get_random_anime():
-    query = random.choice(["naruto", "bleach", "one piece", "tokyo ghoul", "demon slayer", "my hero academia"])
-    url = f"{BASE_URL}?keyw={query}"
+url = "https://animepahe.ru"
 
-    try:
-        res = requests.get(url, headers=HEADERS)
-        res.raise_for_status()
-        data = res.json()
+session = requests.Session()
+response = session.get(url, headers=headers)
 
-        if not data or not isinstance(data, list):
-            return {"error": "Invalid or empty data from API", "raw": data}
-
-        selected = random.choice(data)
-
-        return {
-            "title": selected.get("title"),
-            "image": selected.get("image"),
-            "id": selected.get("id"),
-            "url": selected.get("url")
-        }
-    except Exception as e:
-        return {"error": str(e), "debug_url": url}
+if response.status_code == 200:
+    soup = BeautifulSoup(response.text, 'html.parser')
+    print("Scrape successful. Title of the page:")
+    print(soup.title.string)
+else:
+    print("Blocked or failed:", response.status_code)
