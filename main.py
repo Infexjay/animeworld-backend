@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-import requests
+import cloudscraper
 import random
 
 app = FastAPI()
@@ -11,16 +11,17 @@ def root():
 @app.get("/random-anime")
 def random_anime():
     try:
+        scraper = cloudscraper.create_scraper()
         url = "https://animepahe.ru/api?m=search&q="
-        response = requests.get(url)
+        response = scraper.get(url)
+
         data = response.json()
         anime_list = data.get("data", [])
 
         if not anime_list:
-            return {"error": "No anime found."}
+            return {"error": "No anime found in response."}
 
         selected = random.choice(anime_list)
-
         return {
             "title": selected.get("title"),
             "type": selected.get("type"),
@@ -30,4 +31,4 @@ def random_anime():
         }
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Something went wrong: {str(e)}"}
