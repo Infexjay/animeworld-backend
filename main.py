@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from animepahe import get_anime_list
+import requests
 import random
 
 app = FastAPI()
@@ -10,7 +10,24 @@ def root():
 
 @app.get("/random-anime")
 def random_anime():
-    anime_list = get_anime_list()
-    if not anime_list:
-        return {"error": "No anime found."}
-    return random.choice(anime_list)
+    try:
+        url = "https://animepahe.ru/api?m=search&q="
+        response = requests.get(url)
+        data = response.json()
+        anime_list = data.get("data", [])
+
+        if not anime_list:
+            return {"error": "No anime found."}
+
+        selected = random.choice(anime_list)
+
+        return {
+            "title": selected.get("title"),
+            "type": selected.get("type"),
+            "year": selected.get("year"),
+            "id": selected.get("id"),
+            "slug": selected.get("slug")
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
